@@ -6,6 +6,11 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-
+<fragment
+    android:id="@+id/choose_area_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:name="com.example.administrator.coolweather.AreaFragment"
+    />
 
 </LinearLayout>
