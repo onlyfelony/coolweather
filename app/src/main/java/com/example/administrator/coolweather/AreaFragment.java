@@ -1,12 +1,13 @@
 package com.example.administrator.coolweather;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,11 +16,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
+
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,7 +42,7 @@ import okhttp3.Response;
 
 public class AreaFragment extends Fragment {
     private static final String TAG="Adcscagment";
-    
+
     public static int LEVEL_PROVINCE = 0;
     public static int LEVEL_CITY = 1;
     public static int LEVEL_COUNTRY = 2;
@@ -55,7 +54,7 @@ public class AreaFragment extends Fragment {
     private City selectCity;//选中的市
 
 
-    private LinearLayout linearLayout;
+
     private ProgressBar progressBar;
     private Button back_button;
     private TextView text_title;
@@ -68,7 +67,6 @@ public class AreaFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.choose_area, container, false);
-        linearLayout = view.findViewById(R.id.liner);
         back_button = view.findViewById(R.id.area_back);
         text_title = view.findViewById(R.id.area_title);
         listView = view.findViewById(R.id.list_area);
@@ -91,6 +89,12 @@ public class AreaFragment extends Fragment {
                 } else if (currlevel == LEVEL_CITY) {
                     selectCity = cityList.get(position);
                     queryCountrys();//查询县
+
+                }else if(currlevel==LEVEL_COUNTRY){
+                    Intent intent = new Intent(getActivity(),WeatherActivity.class);
+                    intent.putExtra("weather_id",countryList.get(position).getWeatherId());
+                    startActivity(intent);
+                    getActivity().finish();
 
                 }
             }
@@ -245,7 +249,7 @@ public class AreaFragment extends Fragment {
 
     }
 
- //显示进度条
+    //显示进度条
     private void showWait(){
         if(progressBar==null) {
             //1.找到activity根部的ViewGroup
@@ -266,12 +270,12 @@ public class AreaFragment extends Fragment {
         progressBar.setVisibility(View.VISIBLE);
 
     }
-
+//隐藏进度条
     private void waitCancel(){
 
         if(progressBar!=null){
             progressBar.setVisibility(View.GONE);
         }
-        
+
     }
 }
