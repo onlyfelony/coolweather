@@ -8,10 +8,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 
+import android.support.v4.view.GravityCompat;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebSettings;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -91,10 +93,19 @@ public class AreaFragment extends Fragment {
                     queryCountrys();//查询县
 
                 }else if(currlevel==LEVEL_COUNTRY){
-                    Intent intent = new Intent(getActivity(),WeatherActivity.class);
-                    intent.putExtra("weather_id",countryList.get(position).getWeatherId());
-                    startActivity(intent);
-                    getActivity().finish();
+                    String weatherId = countryList.get(position).getWeatherId();
+                    if(getActivity()instanceof MainActivity) {
+                        Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                        intent.putExtra("weather_id", weatherId);
+                        startActivity(intent);
+                        getActivity().finish();
+                    }else if(getActivity()instanceof WeatherActivity){
+                        WeatherActivity weatherActivity = (WeatherActivity) getActivity();
+                        weatherActivity.drawerLayout.closeDrawer(GravityCompat.START);
+                        weatherActivity.refreshLayout.setRefreshing(true);
+                        weatherActivity.requestWeather(weatherId);
+
+                    }
 
                 }
             }

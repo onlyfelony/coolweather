@@ -6,10 +6,15 @@ import android.graphics.Color;
 import android.os.Build;
 import android.preference.Preference;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -31,7 +36,10 @@ import okhttp3.Response;
 public class WeatherActivity extends AppCompatActivity {
 
     private ImageView biying;
+    public SwipeRefreshLayout refreshLayout;
     private ScrollView weatherlayout;
+    private Button navButton;
+    public DrawerLayout drawerLayout;
     private TextView titleCity;
     private TextView titleUpdateTime;
 
@@ -46,15 +54,16 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView comfortText;
     private TextView carWashText;
     private TextView sportText;
+    private String mweatherId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //让背景图跟状态栏融合
-        if(Build.VERSION.SDK_INT>=21){
+        if (Build.VERSION.SDK_INT >= 21) {
             View decorView = getWindow().getDecorView();
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LAYOUT_STABLE);//改变系统UI的显示
-           // decorView.setFitsSystemWindows(true);
+            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);//改变系统UI的显示
+            // decorView.setFitsSystemWindows(true);
             getWindow().setStatusBarColor(Color.TRANSPARENT);//将状态栏设成透明色
 
         }
@@ -63,7 +72,10 @@ public class WeatherActivity extends AppCompatActivity {
         setContentView(R.layout.activity_weather);
         //初始化控件
         biying = findViewById(R.id.biying_image);
+        refreshLayout = findViewById(R.id.swipe_refresh);
         weatherlayout = findViewById(R.id.mscroll_view);
+        navButton = findViewById(R.id.nav_button);
+        drawerLayout = findViewById(R.id.drawer_layout);
         titleCity = findViewById(R.id.city_name);
         titleUpdateTime = findViewById(R.id.update_time);
         degreeText = findViewById(R.id.degree_text);
@@ -77,24 +89,38 @@ public class WeatherActivity extends AppCompatActivity {
 
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = pref.getString("weather", null);
-        String bi_ying = pref.getString("biying",null);
+        String bi_ying = pref.getString("biying", null);
         if (weatherString != null) {
             Weather weather = Utilty.handleWeatherData(weatherString);
+            mweatherId = weather.basic.weatherid;
             showWeather(weather);
         } else {
-            String weatherId = getIntent().getStringExtra("weather_id");
+            mweatherId = getIntent().getStringExtra("weather_id");
             weatherlayout.setVisibility(View.INVISIBLE);//将整个ScrollView设置为不可见
-            requestWeather(weatherId);//从网络上获取天气
+            requestWeather(mweatherId);//从网络上获取天气
 
 
         }
 
-        if(bi_ying!=null){
+        if (bi_ying != null) {
             Glide.with(this).load(bi_ying).into(biying);
-        }else {
+        } else {
             requestBiying();
         }
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestWeather(mweatherId);
+                requestBiying();
+            }
+        });
 
+        navButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
 
     }
 
@@ -109,7 +135,7 @@ public class WeatherActivity extends AppCompatActivity {
         titleUpdateTime.setText(updateTime);
         degreeText.setText(degree);
         weatherInfoText.setText(weatherInfo);
-
+        forecastlayout.removeAllViews();//先把原来布局中的子项移除
         for (ForeCast foreCast : weather.daily_forecast) {
             View view = LayoutInflater.from(this).inflate(R.layout.forecast_item, forecastlayout, false);
             TextView dateText = view.findViewById(R.id.date_text);
@@ -141,7 +167,7 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     //从网络上获取天气
-    void requestWeather(String weatherId) {
+    void requestWeather(final String weatherId) {
         String address = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=9abd14513e2c4f48a64762f727d296f8";
 
         HttpUtil.sendHttpRequest(address, new Callback() {
@@ -152,6 +178,7 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(WeatherActivity.this, "加载失败", Toast.LENGTH_SHORT).show();
+                        refreshLayout.setRefreshing(false);//隐藏刷新进度条
                     }
                 });
 
@@ -169,12 +196,14 @@ public class WeatherActivity extends AppCompatActivity {
                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
                             editor.putString("weather", responsedata);
                             editor.apply();
+                            mweatherId = weather.basic.weatherid;
                             showWeather(weather);
 
                         } else {
                             Toast.makeText(WeatherActivity.this, "加载失败", Toast.LENGTH_SHORT).show();
 
                         }
+                        refreshLayout.setRefreshing(false);//隐藏刷新进度条
                     }
                 });
 
@@ -186,8 +215,8 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     //从网络上获取图片
-    void requestBiying(){
-        String address =  "http://guolin.tech/api/bing_pic";
+    void requestBiying() {
+        String address = "http://guolin.tech/api/bing_pic";
         HttpUtil.sendHttpRequest(address, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -208,18 +237,16 @@ public class WeatherActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if(respnseImage!=null){
+                        if (respnseImage != null) {
 
                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
-                            editor.putString("biying",respnseImage);
+                            editor.putString("biying", respnseImage);
                             editor.apply();
                             Glide.with(WeatherActivity.this).load(respnseImage).into(biying);
 
                         }
                     }
                 });
-
-
 
 
             }

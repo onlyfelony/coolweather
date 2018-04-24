@@ -23,5 +23,14 @@
         android:textColor="#fff"
         />
 
+    <Button
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:id="@+id/nav_button"
+        android:background="@drawable/ic_home"
+        android:layout_marginLeft="10dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        />
 
 </RelativeLayout>
