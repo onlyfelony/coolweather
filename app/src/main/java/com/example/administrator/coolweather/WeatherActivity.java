@@ -24,6 +24,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.administrator.coolweather.gson.ForeCast;
 import com.example.administrator.coolweather.gson.Weather;
+import com.example.administrator.coolweather.service.UpdateWeatherService;
 import com.example.administrator.coolweather.util.HttpUtil;
 import com.example.administrator.coolweather.util.Utilty;
 
@@ -163,6 +164,8 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText.setText(washCar);
         sportText.setText(spor);
         weatherlayout.setVisibility(View.VISIBLE);
+        Intent intent = new Intent(this, UpdateWeatherService.class);
+        startService(intent);
 
     }
 
